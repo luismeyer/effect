@@ -1,8 +1,17 @@
-import { Node } from "../../src/render";
-import { createState } from "../../src/state";
+import { Element } from "../../src/render";
+import { createEffect, createState } from "../../src/state";
+import { appName } from "./main";
 
-export function Counter(): Node {
+export function Counter(): Element {
   const count = createState(0);
+
+  createEffect(() => {
+    if (count.value < 5) {
+      return;
+    }
+
+    appName.value = "Nice clicking";
+  });
 
   return {
     type: "div",

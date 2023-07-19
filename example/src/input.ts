@@ -1,5 +1,6 @@
 import { Element } from "../../src/render";
-import { createEffect, createState } from "../../src/state";
+import { createState } from "../../src/state";
+import { appName } from "./main";
 
 type InputProps = {
   defaultValue: string;
@@ -8,17 +9,17 @@ type InputProps = {
 export function Input({ defaultValue }: InputProps): Element {
   const inputValue = createState(defaultValue);
 
-  createEffect(() => {
-    console.log(inputValue.value);
-  });
-
   return {
     type: "div",
+    attributes: {
+      class: "flex",
+    },
     children: [
       {
         type: "span",
         content: "Input:",
       },
+
       {
         type: "input",
         attributes: {
@@ -27,12 +28,19 @@ export function Input({ defaultValue }: InputProps): Element {
         },
         eventListeners: {
           input: (event) => {
-            console.log("change ", event.target);
+            const { value } = event.target as HTMLInputElement;
 
-            inputValue.value = (event.target as HTMLInputElement).value;
+            inputValue.value = value;
           },
-          focus: () => {
-            console.log("focus input");
+        },
+      },
+
+      {
+        type: "button",
+        content: "Set App Name",
+        eventListeners: {
+          click: () => {
+            appName.value = inputValue.value;
           },
         },
       },

@@ -23,8 +23,14 @@ function renderElement(node: Element, parent: HTMLElement) {
 
       if (typeof value === "function") {
         trackEffect(() => {
-          console.log("set attr");
-          element.setAttribute(key, value());
+          const newValue = value();
+
+          if (!newValue) {
+            element.removeAttribute(key);
+            return;
+          }
+
+          element.setAttribute(key, newValue);
         });
       }
     });
