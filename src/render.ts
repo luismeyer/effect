@@ -1,70 +1,58 @@
-import { trackEffect } from "./state";
+import { Node } from "./node";
+import { registerAttributes } from "./register-attributes";
+import { registerEventlisteners } from "./register-event-listeners";
+import { registerTextContent } from "./register-text-content";
+import { renderChild } from "./render-child";
 
-type ReactiveString = () => string;
+function renderChildren(node: Node, element: HTMLElement) {
+  const { children } = node;
 
-export type Element = {
-  type: keyof HTMLElementTagNameMap;
-  content?: ReactiveString | string;
-  children?: Element[];
-  attributes?: Record<string, ReactiveString | string>;
-  eventListeners?: Partial<
-    Record<keyof GlobalEventHandlersEventMap, EventListener>
-  >;
-};
+  if (!children) {
+    return;
+  }
 
-function renderElement(node: Element, parent: HTMLElement) {
-  const element = document.createElement(node.type);
+  let childIndex = 0;
 
-  if (node.attributes) {
-    Object.entries(node.attributes).forEach(([key, value]) => {
-      if (typeof value === "string") {
-        element.setAttribute(key, value);
-      }
+  children.forEach((child) => {
+    if (child.type !== "EffectState") {
+      renderChild(child, element, childIndex);
+      return;
+    }
 
-      if (typeof value === "function") {
-        trackEffect(() => {
-          const newValue = value();
+    child.value.forEach((item) => {
+      renderChild(item, element, childIndex);
 
-          if (!newValue) {
-            element.removeAttribute(key);
-            return;
-          }
-
-          element.setAttribute(key, newValue);
-        });
-      }
+      childIndex + 1;
     });
-  }
 
-  if (node.eventListeners) {
-    Object.entries(node.eventListeners).forEach(([key, value]) => {
-      element.addEventListener(key, value);
+    child.sub((newValue) => {
+      newValue.forEach((item) => {
+        renderChild(item, element, childIndex);
+
+        childIndex + 1;
+      });
     });
-  }
 
-  if (node.content && typeof node.content === "string") {
-    element.textContent = node.content;
-  }
-
-  if (node.content && typeof node.content === "function") {
-    element.textContent = node.content();
-
-    trackEffect(() => {
-      if (typeof node.content !== "function") {
-        return;
-      }
-
-      element.textContent = node.content();
-    });
-  }
-
-  parent.appendChild(element);
-
-  node.children?.forEach((child) => {
-    render(child, element);
+    childIndex + 1;
   });
 }
 
-export function render(node: Element, parent: HTMLElement) {
-  renderElement(node, parent);
+export function recursiveRender(node: Node) {
+  const element = document.createElement(node.type);
+
+  registerAttributes(node, element);
+
+  registerEventlisteners(node, element);
+
+  registerTextContent(node, element);
+
+  renderChildren(node, element);
+
+  return element;
+}
+
+export function render(node: Node, mount: HTMLElement) {
+  const element = recursiveRender(node);
+
+  mount.appendChild(element);
 }

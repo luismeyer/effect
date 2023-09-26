@@ -1,38 +1,51 @@
-export type State<T> = { value: T };
+export type State<T> = {
+  value: T;
+  readonly type: "EffectState";
+  readonly sub: (subscription: Subscribtion<T>) => void;
+  readonly derive: <O>(transformer: (value: T) => O) => State<O>;
+};
 
 export type Effect = () => void;
 
-let trackingEffect: Effect | undefined;
+type Subscribtion<T> = (newValue: T) => void;
 
-export function trackEffect(fc: Effect) {
-  trackingEffect = fc;
-  fc();
-  trackingEffect = undefined;
-}
+export function createState<T>(initialValue: T): State<T> {
+  let value = initialValue;
 
-export function createState<T>(initialValue: T) {
-  let variable = initialValue;
+  const subscribers = new Set<Subscribtion<T>>();
 
-  const dependencies = new Set<() => void>();
-
-  const state = {
+  return {
+    type: "EffectState",
+    sub: (subscription: Subscribtion<T>) => {
+      subscribers.add(subscription);
+    },
     get value() {
-      if (trackingEffect) {
-        dependencies.add(trackingEffect);
-      }
-
-      return variable;
+      return value;
     },
     set value(newValue: T) {
-      variable = newValue;
+      if (newValue === value) {
+        return;
+      }
 
-      dependencies.forEach((effect) => effect());
+      value = newValue;
+
+      subscribers.forEach((subscription) => subscription(newValue));
+    },
+    derive(transformer) {
+      const initial = transformer(value);
+      const newState = createState(initial);
+
+      subscribers.add((newValue) => {
+        newState.value = transformer(newValue);
+      });
+
+      return newState;
     },
   };
-
-  return state;
 }
 
-export function createEffect(effect: Effect) {
-  trackEffect(effect);
+export function createEffect<T>(effect: Effect, states: Array<State<T>>) {
+  effect();
+
+  states.forEach((state) => state.sub(() => effect()));
 }

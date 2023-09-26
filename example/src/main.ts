@@ -4,24 +4,24 @@ import { render } from "../../src/render";
 import { createState } from "../../src/state";
 import { Counter } from "./counter";
 import { Input } from "./input";
+import { List } from "./list";
 
 const app = document.getElementById("app")!;
 
-export const appName = createState("My App");
+export const appNameState = createState("Test App");
 
 render(
   {
     type: "div",
-    attributes: {
-      class: "grid",
-    },
+    attributes: { class: "grid" },
     children: [
       {
         type: "h1",
-        content: () => appName.value,
+        textContent: appNameState,
       },
       Counter(),
       Input({ defaultValue: "Hello" }),
+      List(),
     ],
   },
   app

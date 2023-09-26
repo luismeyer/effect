@@ -1,13 +1,13 @@
-import { Element } from "../../src/render";
+import { Node } from "../../src/node";
 import { createState } from "../../src/state";
-import { appName } from "./main";
+import { appNameState } from "./main";
 
 type InputProps = {
   defaultValue: string;
 };
 
-export function Input({ defaultValue }: InputProps): Element {
-  const inputValue = createState(defaultValue);
+export function Input({ defaultValue }: InputProps): Node {
+  const inputState = createState(defaultValue);
 
   return {
     type: "div",
@@ -17,30 +17,30 @@ export function Input({ defaultValue }: InputProps): Element {
     children: [
       {
         type: "span",
-        content: "Input:",
+        textContent: "Input:",
       },
 
       {
         type: "input",
         attributes: {
           type: "text",
-          value: () => inputValue.value,
+          value: inputState,
         },
         eventListeners: {
           input: (event) => {
             const { value } = event.target as HTMLInputElement;
 
-            inputValue.value = value;
+            inputState.value = value;
           },
         },
       },
 
       {
         type: "button",
-        content: "Set App Name",
+        textContent: "Set App Name",
         eventListeners: {
           click: () => {
-            appName.value = inputValue.value;
+            appNameState.value = inputState.value;
           },
         },
       },

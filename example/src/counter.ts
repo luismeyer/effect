@@ -1,24 +1,26 @@
-import { Element } from "../../src/render";
+import { Node } from "../../src/node";
 import { createEffect, createState } from "../../src/state";
-import { appName } from "./main";
+import { appNameState } from "./main";
 
-export function Counter(): Element {
+export function Counter(): Node {
   const count = createState(0);
 
   createEffect(() => {
-    if (count.value < 5) {
-      return;
+    if (count.value === 5) {
+      appNameState.value = "You clicked 5 times";
     }
-
-    appName.value = "Nice clicking";
-  });
+  }, [count]);
 
   return {
     type: "div",
+    attributes: {
+      class: "flex flex-row gap-2",
+    },
     children: [
       {
         type: "button",
-        content: "-",
+        textContent: "-",
+        visible: count.derive((value) => value > 0),
         eventListeners: {
           click: () => {
             count.value = count.value - 1;
@@ -27,11 +29,12 @@ export function Counter(): Element {
       },
       {
         type: "span",
-        content: () => ` ${count.value} `,
+        textContent: count,
       },
       {
         type: "button",
-        content: "+",
+        textContent: "+",
+        visible: count.derive((value) => value < 10),
         eventListeners: {
           click: () => {
             count.value = count.value + 1;
